@@ -173,7 +173,7 @@ export const generateSummary = async (text) => {
 export const chatWithContext = async (question, chunks) => {
   const context = chunks.map((c, i) => `[Chunk ${i + 1}]\n${c.content}`).join('\n\n');
   
-  const prompt = `Based on the following context from a document, Analyse the context and answer the user's question accurately and concisely according to the context.
+  const prompt = `Based on the following context from a document, analyse the context and answer the user's question accurately and thoroughly, using relevant details and examples from the context where they help explain the answer.
   If the answer is not in the context, say so.
   
   Context:

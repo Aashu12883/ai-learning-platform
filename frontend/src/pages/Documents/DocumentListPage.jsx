@@ -53,12 +53,9 @@ const DocumentListPage = () => {
       return;
     }
     setUploading(true);
-    const formData = new FormData();
-    formData.append("file", uploadFile);
-    formData.append("title", uploadTitle);
 
     try {
-      await documentService.uploadDocument(formData);
+      await documentService.uploadDocument(uploadFile, uploadTitle);
       toast.success("Document uploaded successfully!");
       setIsUploadModalOpen(false);
       setUploadFile(null);

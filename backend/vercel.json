@@ -1,0 +1,12 @@
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }],
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 60,
+      "includeFiles": [
+        "node_modules/@napi-rs/canvas/**",
+        "node_modules/@napi-rs/canvas-linux-x64-gnu/**"
+      ]
+    }
+  }
+}

@@ -3,8 +3,6 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import connectDB from './config/db.js'
 import errorHandler from './middleware/errorHandler.js'
 
@@ -15,11 +13,6 @@ import aiRoutes from './routes/aiRoutes.js'
 import quizRoutes from './routes/quizRoutes.js'
 import progressRoutes from './routes/progressRoutes.js'
 
-
-// ES6 module __dirname alternative
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 // Initialize express app
 const app = express();
 
@@ -27,21 +20,20 @@ const app = express();
 connectDB();
 
 // Middleware to handle CORS
+// Uploaded PDFs now live on Vercel Blob (not this server) and auth is a
+// header-based JWT rather than a cookie, so a specific allowed origin is
+// enough here — `credentials: true` isn't needed and was previously an
+// invalid combination alongside a wildcard `origin`.
 app.use(
   cors({
-    origin: "*",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
   })
 );
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
-// Static folder for uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes)
@@ -62,13 +54,20 @@ app.use((req, res) => {
   });
 });
 
-// Start server
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
-
 process.on('unhandledRejection', (err) => {
   console.error(`Error: ${err.message}`);
   process.exit(1);
 });
+
+// On Vercel, this file is imported by api/index.js and invoked per-request
+// as a serverless function — it never calls `.listen()`. Locally there's no
+// `VERCEL` env var, so `npm run dev` still starts a normal long-running
+// server exactly as before.
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 8000;
+  app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  });
+}
+
+export default app;

@@ -16,6 +16,8 @@ const DocumentDetailPage = () => {
   const { id } = useParams();
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Content');
 
   useEffect(() => {
@@ -34,29 +36,41 @@ const DocumentDetailPage = () => {
     fetchDocumentDetails();
   }, [id]);
 
-  // Helper function to get the full PDF URL
-  const getPdfUrl = () => {
-    if (!document?.data?.filePath) return null;
-    
-    const filePath = document.data.filePath;
-    
-    if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
-      return filePath;
-    }
-    
-    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-    return `${baseUrl}${filePath.startsWith('/') ? '' : '/'}${filePath}`;
-  };
+  // The Blob store is private, so the PDF can't be loaded with a plain
+  // <iframe src="..."> — that request wouldn't carry our JWT. We fetch the
+  // file ourselves (through documentService, with the auth header attached)
+  // and turn it into a local object URL the iframe can safely use.
+  useEffect(() => {
+    let objectUrl = null;
+
+    const fetchPdf = async () => {
+      setPdfLoading(true);
+      try {
+        objectUrl = await documentService.getDocumentFileUrl(id);
+        setPdfUrl(objectUrl);
+      } catch (error) {
+        console.error('Failed to load PDF file:', error);
+      } finally {
+        setPdfLoading(false);
+      }
+    };
+
+    fetchPdf();
+
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [id]);
 
   const renderContent = () => {
-    if (loading) {
+    if (loading || pdfLoading) {
         return <Spinner />;
     }
-    if (!document || !document.data || !document.data.filePath) {
+    if (!document || !document.data || !pdfUrl) {
         return <div className="text-center p-8">PDF not available.</div>;
     }
-
-    const pdfUrl = getPdfUrl();
 
     return (
         <div className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">

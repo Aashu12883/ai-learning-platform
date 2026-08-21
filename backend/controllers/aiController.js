@@ -3,7 +3,14 @@ import Flashcard from '../models/Flashcard.js';
 import Quiz from '../models/Quiz.js';
 import ChatHistory from '../models/ChatHistory.js';
 import * as geminiService from '../utils/geminiService.js';
-import { findRelevantChunks } from '../utils/textChunker.js';
+import { embedQuery, findRelevantChunksSemantic } from '../utils/embeddingService.js';
+
+// How many chunks to feed into the prompt per question. Bumped from 3 to 5:
+// with 3, a topically-uniform document (e.g. a slide deck about one subject)
+// can end up sending 1 good chunk + 2 noisy/garbled ones (see conversation),
+// crowding out the useful content. 5 gives the model more surrounding
+// context so a couple of low-value chunks matter less.
+const MAX_CONTEXT_CHUNKS = 5;
 
 // @desc    Generate flashcards from document
 // @route   POST /api/ai/generate-flashcards
@@ -194,8 +201,10 @@ export const chat = async (req, res, next) => {
       });
     }
 
-    // Find relevant chunks
-    const relevantChunks = findRelevantChunks(document.chunks, question, 3);
+    // Find relevant chunks via semantic (embedding) search, not keyword
+    // matching — see backend/utils/embeddingService.js
+    const questionEmbedding = await embedQuery(question);
+    const relevantChunks = await findRelevantChunksSemantic(document._id, req.user._id, questionEmbedding, MAX_CONTEXT_CHUNKS);
     const chunkIndices = relevantChunks.map(c => c.chunkIndex);
 
     // Get or create chat history
@@ -277,8 +286,9 @@ export const explainConcept = async (req, res, next) => {
       });
     }
 
-    // Find relevant chunks for the concept
-    const relevantChunks = findRelevantChunks(document.chunks, concept, 3);
+    // Find relevant chunks for the concept via semantic (embedding) search
+    const conceptEmbedding = await embedQuery(concept);
+    const relevantChunks = await findRelevantChunksSemantic(document._id, req.user._id, conceptEmbedding, MAX_CONTEXT_CHUNKS);
     const context = relevantChunks.map(c => c.content).join('\n\n');
 
     // Generate explanation using Gemini

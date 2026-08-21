@@ -1,4 +1,4 @@
-export const BASE_URL = "http://localhost:8000";
+export const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export const API_PATHS = {
   AUTH: {
@@ -10,9 +10,13 @@ export const API_PATHS = {
   },
 
   DOCUMENTS: {
-    UPLOAD: "/api/documents/upload",
+    // The file itself goes browser -> Vercel Blob directly (see
+    // documentService.js); these two are small JSON-only requests.
+    UPLOAD_TOKEN: "/api/documents/upload-token",
+    CONFIRM_UPLOAD: "/api/documents/confirm",
     GET_DOCUMENTS: "/api/documents",
     GET_DOCUMENT_BY_ID: (id) => `/api/documents/${id}`,
+    GET_DOCUMENT_FILE: (id) => `/api/documents/${id}/file`,
     UPDATE_DOCUMENT: (id) => `/api/documents/${id}`,
     DELETE_DOCUMENT: (id) => `/api/documents/${id}`,
   },
