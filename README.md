@@ -163,4 +163,3 @@ Authorization: Bearer <JWT_TOKEN>
 - The browser PDF viewer may use temporary browser memory/cache, but it does not store the uploaded document in `localStorage` unless the app explicitly writes it there.
 - The frontend sends ordinary API requests through `frontend/src/utils/axiosInstance.js` and endpoint paths are defined in `frontend/src/utils/apiPaths.js`.
 
-## License
