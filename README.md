@@ -164,5 +164,3 @@ Authorization: Bearer <JWT_TOKEN>
 - The frontend sends ordinary API requests through `frontend/src/utils/axiosInstance.js` and endpoint paths are defined in `frontend/src/utils/apiPaths.js`.
 
 ## License
-
-This project is intended for educational use. Add a license file if you plan to publish or distribute it.
